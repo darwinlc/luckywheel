@@ -60,6 +60,14 @@
     --ink: #222; --btn: #ffd23f; --btn-ink: #222; --btn-shadow: #222; --font: "Patrick Hand", "Comic Sans MS", cursive;
   }
 
+  body.traffic {
+    --bg: repeating-linear-gradient(180deg, #ffd23f 0 38px, transparent 38px 72px) 50% 0/10px 100% no-repeat,
+          linear-gradient(90deg, #fff 0 8px, transparent 8px calc(100% - 8px), #fff calc(100% - 8px)),
+          radial-gradient(circle at 50% 30%, #4a4f57, #2b2e33 70%);
+    --ink: #fff; --btn: #2ecc40; --btn-shadow: #1b7f27; --card: #2b2e33ee; --font: "Baloo 2", sans-serif;
+  }
+  body.traffic h1 { text-shadow: 3px 3px 0 #e63946, 6px 6px 0 #ffb703; }
+
   h1 {
     font-size: clamp(2rem, 7vw, 3.4rem);
     margin: 8px 0 4px;
@@ -90,7 +98,7 @@
     background: #ffffff99; border-radius: 22px; padding: 6px; margin-bottom: 10px;
     border: 3px solid #0001;
   }
-  body.space .scenarios { background: #ffffff22; }
+  body.space .scenarios, body.traffic .scenarios { background: #ffffff22; }
   .scenarios button {
     font: inherit; font-size: 1.1rem; font-weight: 800; color: inherit;
     border: none; background: transparent; border-radius: 16px; padding: 8px 14px;
@@ -158,7 +166,7 @@
   .ed-title { font-size: 1.6rem; font-weight: 800; text-align: center; margin-bottom: 10px; }
   .ed-list { list-style: none; margin: 0; padding: 4px; overflow-y: auto; flex: 1; display: grid; gap: 6px; }
   .ed-list li { display: flex; align-items: center; gap: 6px; background: #ffffffaa; border-radius: 14px; padding: 4px 6px; }
-  body.space .ed-list li { background: #ffffff22; }
+  body.space .ed-list li, body.traffic .ed-list li { background: #ffffff22; }
   .ed-list .dot { width: 18px; height: 18px; border-radius: 50%; flex: none; border: 2px solid #0003; }
   .ed-list .em { font-size: 1.3rem; }
   .ed-list input, .ed-add input {
@@ -175,11 +183,11 @@
   .ed-add input { color: #333; }
   .ed-add button { background: var(--btn); }
   .ed-msg { min-height: 1.4em; text-align: center; font-weight: 700; margin: 6px 0; color: #e63946; }
-  body.space .ed-msg { color: #ffb4c0; }
+  body.space .ed-msg, body.traffic .ed-msg { color: #ffb4c0; }
   .ed-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
   .ed-actions .spin { font-size: 1.3rem; padding: 8px 26px; }
   .ed-reset { font: inherit; border: none; background: #0001; color: inherit; border-radius: 12px; padding: 8px 12px; cursor: pointer; }
-  body.space .ed-reset { background: #ffffff22; }
+  body.space .ed-reset, body.traffic .ed-reset { background: #ffffff22; }
 
   #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 11; }
 </style>
@@ -327,6 +335,14 @@ const THEMES = {
     stroke: "#222222", strokeW: 4, dash: [10, 6], pointer: "✏️", hub: "😊",
     font: "400 {s}px 'Patrick Hand'", deco: ["🖍️","🌈","☀️","⭐","🎨","☁️"],
   },
+  traffic: {
+    name: "🚦 Traffic Light", title: "Red, Amber, GO!", sub: "Stop… wait… spin!",
+    colors: ["#e63946","#ffb703","#2ecc40"],
+    textColors: ["#ffffff","#2b2e33","#ffffff"],
+    text: "#ffffff", rim: "#1f2226", rimEdge: "#ffb703", bulbs: ["#ff4d5a","#ffc93c","#3ee05a"],
+    stroke: "#1f2226", strokeW: 4, dash: null, pointer: "🚦", hub: "🚗",
+    font: "800 {s}px 'Baloo 2'", deco: ["🚗","🚌","🚦","🛑","🚲","🚕"], glow: true,
+  },
 };
 
 /* ===== Setup ===== */
@@ -359,12 +375,12 @@ function draw() {
   ctx.lineWidth = 4; ctx.strokeStyle = theme.rimEdge; ctx.setLineDash([]); ctx.stroke();
 
   // bulbs
-  const n = 32;
+  const n = 30;
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2 + rot * 0.0;
     const x = c + Math.cos(a) * (c - rimW / 2 - 2), y = c + Math.sin(a) * (c - rimW / 2 - 2);
     ctx.beginPath(); ctx.arc(x, y, rimW * 0.22, 0, Math.PI * 2);
-    ctx.fillStyle = i % 2 ? theme.bulb : theme.bulbAlt;
+    ctx.fillStyle = theme.bulbs ? theme.bulbs[i % theme.bulbs.length] : (i % 2 ? theme.bulb : theme.bulbAlt);
     if (theme.glow) { ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10; }
     ctx.fill(); ctx.shadowBlur = 0;
   }
@@ -388,7 +404,8 @@ function draw() {
 
     // label
     ctx.save(); ctx.rotate(i * arc + arc / 2);
-    ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillStyle = theme.text;
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillStyle = theme.textColors ? theme.textColors[segIdx(i)] : theme.text;
     // font shrinks as slices get thinner; text squeezes to fit between rim and hub
     const fs = Math.max(11, Math.min(W * 0.045, R * arc * 0.5));
     const pad = W * 0.03, hubR = W * 0.09;
@@ -407,11 +424,17 @@ function draw() {
 }
 
 // avoid the last slice matching the first one's color
-function segColor(i) {
+function segIdx(i) {
   const k = theme.colors.length, n = ITEMS.length;
   let idx = i % k;
-  if (i === n - 1 && n > 1 && idx === 0) idx = 1;
-  return theme.colors[idx];
+  if (i === n - 1 && n > 1 && idx === 0) {
+    const prev = (i - 1) % k;           // pick a color unlike both neighbours
+    for (let j = 1; j < k; j++) if (j !== prev) { idx = j; break; }
+  }
+  return idx;
+}
+function segColor(i) {
+  return theme.colors[segIdx(i)];
 }
 
 /* ===== Themes ===== */
