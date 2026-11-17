@@ -1,0 +1,13 @@
+{
+  "name": "Lucky Wheel",
+  "short_name": "Lucky Wheel",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffd6e8",
+  "theme_color": "#ffd6e8",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

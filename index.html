@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lucky Wheel</title>
+<!-- Home-screen app (iPhone / iPad / Android) -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lucky Wheel">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffd6e8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Fredoka:wght@500;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff;
+    --ink: #333;
+    --btn: #ff5fa2;
+    --btn-ink: #fff;
+    --btn-shadow: #c2306f;
+    --card: #ffffffcc;
+    --font: "Fredoka", "Baloo 2", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    overflow-x: hidden;
+    transition: background .5s;
+    display: flex; flex-direction: column; align-items: center;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(40px, env(safe-area-inset-bottom));
+  }
+
+  /* ---------- Themes ---------- */
+  body.candy {
+    --bg: radial-gradient(#ffffff88 3px, transparent 4px) 0 0/34px 34px, linear-gradient(160deg,#ffd6e8,#e6d7ff 60%,#d4f4ff);
+    --ink: #7a2a5a; --btn: #ff5fa2; --btn-shadow: #c2306f; --font: "Fredoka", sans-serif;
+  }
+  body.jungle {
+    --bg: radial-gradient(circle at 10% 110%, #2f8f46 0 120px, transparent 121px), radial-gradient(circle at 95% 105%, #2f8f46 0 160px, transparent 161px), linear-gradient(180deg,#d9f7b8,#7ed37f);
+    --ink: #2d4a12; --btn: #ff9f1c; --btn-shadow: #b8660a; --font: "Baloo 2", sans-serif;
+  }
+  body.space {
+    --bg: radial-gradient(#fff 1px, transparent 1.5px) 0 0/60px 60px, radial-gradient(#ffe9a8 1px, transparent 1.5px) 30px 25px/90px 90px, radial-gradient(circle at 25% 15%, #4b2f9a, #120c3a 60%, #05051a);
+    --ink: #fff; --btn: #7c4dff; --btn-shadow: #4a22b8; --card: #1c1450ee; --font: "Fredoka", sans-serif;
+  }
+  body.ocean {
+    --bg: radial-gradient(circle, #ffffff55 6px, transparent 7px) 0 0/80px 120px, linear-gradient(180deg,#b5f1ff,#45b4ef 55%,#1c6fc2);
+    --ink: #0b3a6b; --btn: #ff6f61; --btn-shadow: #b8392d; --font: "Baloo 2", sans-serif;
+  }
+  body.crayon {
+    --bg: repeating-linear-gradient(#fffaf0 0 34px, #cfe3ff 34px 36px);
+    --ink: #222; --btn: #ffd23f; --btn-ink: #222; --btn-shadow: #222; --font: "Patrick Hand", "Comic Sans MS", cursive;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 7vw, 3.4rem);
+    margin: 8px 0 4px;
+    letter-spacing: 1px;
+    text-shadow: 3px 3px 0 #ffffffaa;
+    text-align: center;
+  }
+  body.space h1 { text-shadow: 0 0 12px #b99cff, 3px 3px 0 #4a22b8; }
+  body.crayon h1 { text-shadow: 3px 3px 0 #ff6b6b; }
+  .subtitle { margin: 0 0 14px; font-size: 1.05rem; opacity: .85; text-align: center; }
+
+  /* ---------- Theme picker ---------- */
+  .themes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; max-width: 640px; }
+  .themes button {
+    font: inherit; font-size: 1rem; font-weight: 700;
+    border: 3px solid #0002; border-radius: 999px; padding: 6px 14px;
+    background: #ffffffcc; color: #333; cursor: pointer;
+    transition: transform .15s;
+  }
+  .themes button:hover { transform: translateY(-2px) rotate(-2deg); }
+  .themes button.active { background: var(--btn); color: var(--btn-ink); border-color: var(--btn-shadow); box-shadow: 0 4px 0 var(--btn-shadow); }
+
+  /* ---------- Scenario picker ---------- */
+  .pick-label { font-weight: 800; font-size: 1.15rem; margin: 2px 0 6px; text-align: center; }
+  .pick-label.small { font-size: .9rem; opacity: .8; margin-top: 4px; }
+  .scenarios {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+    background: #ffffff99; border-radius: 22px; padding: 6px; margin-bottom: 10px;
+    border: 3px solid #0001;
+  }
+  body.space .scenarios { background: #ffffff22; }
+  .scenarios button {
+    font: inherit; font-size: 1.1rem; font-weight: 800; color: inherit;
+    border: none; background: transparent; border-radius: 16px; padding: 8px 14px;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    transition: transform .15s, background .2s;
+  }
+  .scenarios button .ico { font-size: 1.6rem; line-height: 1; }
+  .scenarios button:hover { transform: scale(1.06); }
+  .scenarios button.active { background: var(--btn); color: var(--btn-ink); box-shadow: 0 4px 0 var(--btn-shadow); }
+
+  /* ---------- Wheel ---------- */
+  .stage { position: relative; width: min(94vw, 84vh, 720px); aspect-ratio: 1; margin: 6px 0 18px; }
+  canvas#wheel { width: 100%; height: 100%; display: block; filter: drop-shadow(0 10px 12px #0004); }
+  .pointer {
+    position: absolute; left: 50%; top: -18px; transform: translateX(-50%);
+    font-size: clamp(2.6rem, 10vw, 3.6rem); line-height: 1; z-index: 2;
+    filter: drop-shadow(0 4px 2px #0005);
+    transform-origin: 50% 20%;
+  }
+  .pointer.tick { animation: tick .12s ease-out; }
+  @keyframes tick { 0%{transform:translateX(-50%) rotate(0)} 50%{transform:translateX(-50%) rotate(-18deg)} 100%{transform:translateX(-50%) rotate(0)} }
+  .hub {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    width: 16%; aspect-ratio: 1; border-radius: 50%;
+    background: #fff; border: 6px solid var(--btn-shadow);
+    display: grid; place-items: center; font-size: clamp(1.6rem, 6vw, 2.6rem);
+    box-shadow: 0 4px 0 #0003; cursor: pointer; user-select: none;
+  }
+
+  .spin {
+    font: inherit; font-size: clamp(1.5rem, 6vw, 2rem); font-weight: 800;
+    background: var(--btn); color: var(--btn-ink);
+    border: none; border-radius: 22px; padding: 12px 46px;
+    box-shadow: 0 7px 0 var(--btn-shadow); cursor: pointer;
+    transition: transform .1s, box-shadow .1s;
+    animation: bounce 1.6s infinite;
+  }
+  body.crayon .spin { border: 3px solid #222; border-radius: 18px 26px 16px 24px; }
+  .spin:active { transform: translateY(5px); box-shadow: 0 2px 0 var(--btn-shadow); }
+  .spin:disabled { animation: none; opacity: .7; cursor: default; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+  .tools { margin-top: 14px; display: flex; gap: 10px; }
+  .tools button { font: inherit; border: none; background: #ffffffaa; border-radius: 12px; padding: 6px 12px; cursor: pointer; color: #333; }
+
+  /* ---------- Floating decorations ---------- */
+  .deco { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; }
+  .deco span { position: absolute; font-size: 2rem; opacity: .75; animation: float 7s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-6deg)} 50%{transform:translateY(-22px) rotate(6deg)} }
+
+  /* ---------- Result popup ---------- */
+  .modal { position: fixed; inset: 0; display: none; place-items: center; background: #0006; z-index: 10; padding: 16px; }
+  .modal.show { display: grid; }
+  .card {
+    background: var(--card); color: var(--ink); backdrop-filter: blur(6px);
+    border-radius: 28px; padding: 26px 34px; text-align: center; max-width: 360px; width: 100%;
+    border: 5px solid var(--btn); box-shadow: 0 10px 0 var(--btn-shadow);
+    animation: pop .45s cubic-bezier(.2,1.6,.4,1);
+  }
+  .card .big { font-size: 5rem; line-height: 1.1; }
+  .card .label { font-size: 2rem; font-weight: 800; margin: 6px 0 16px; }
+  @keyframes pop { from { transform: scale(.3) rotate(-10deg); } to { transform: scale(1) rotate(0); } }
+  /* ---------- List editor ---------- */
+  .card.editor { max-width: 440px; max-height: 90vh; display: flex; flex-direction: column; padding: 20px; text-align: left; }
+  .ed-title { font-size: 1.6rem; font-weight: 800; text-align: center; margin-bottom: 10px; }
+  .ed-list { list-style: none; margin: 0; padding: 4px; overflow-y: auto; flex: 1; display: grid; gap: 6px; }
+  .ed-list li { display: flex; align-items: center; gap: 6px; background: #ffffffaa; border-radius: 14px; padding: 4px 6px; }
+  body.space .ed-list li { background: #ffffff22; }
+  .ed-list .dot { width: 18px; height: 18px; border-radius: 50%; flex: none; border: 2px solid #0003; }
+  .ed-list .em { font-size: 1.3rem; }
+  .ed-list input, .ed-add input {
+    font: inherit; font-size: 1.15rem; color: inherit; flex: 1; min-width: 0;
+    border: none; background: transparent; padding: 6px 4px; border-radius: 8px;
+  }
+  .ed-list input:focus, .ed-add input:focus { outline: 3px solid var(--btn); background: #fff; color: #333; }
+  .ed-list .del, .ed-add button {
+    font-size: 1.2rem; border: none; border-radius: 12px; width: 40px; height: 40px; flex: none; cursor: pointer;
+  }
+  .ed-list .del { background: #ff6b6b33; }
+  .ed-list .del:hover { background: #ff6b6b88; }
+  .ed-add { display: flex; gap: 6px; margin-top: 10px; background: #fff; border-radius: 14px; padding: 4px; border: 3px dashed var(--btn); }
+  .ed-add input { color: #333; }
+  .ed-add button { background: var(--btn); }
+  .ed-msg { min-height: 1.4em; text-align: center; font-weight: 700; margin: 6px 0; color: #e63946; }
+  body.space .ed-msg { color: #ffb4c0; }
+  .ed-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ed-actions .spin { font-size: 1.3rem; padding: 8px 26px; }
+  .ed-reset { font: inherit; border: none; background: #0001; color: inherit; border-radius: 12px; padding: 8px 12px; cursor: pointer; }
+  body.space .ed-reset { background: #ffffff22; }
+
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 11; }
+</style>
+</head>
+<body class="candy">
+  <div class="deco" id="deco"></div>
+
+  <h1 id="title">Spin the Wheel!</h1>
+  <p class="subtitle" id="subtitle">Pick a look, then give it a spin!</p>
+
+  <div class="pick-label">What are we spinning?</div>
+  <div class="scenarios" id="scenarios" role="tablist"></div>
+  <div class="pick-label small">Wheel look</div>
+  <div class="themes" id="themes"></div>
+
+  <div class="stage">
+    <div class="pointer" id="pointer">🔻</div>
+    <canvas id="wheel"></canvas>
+    <div class="hub" id="hub">🍭</div>
+  </div>
+
+  <button class="spin" id="spinBtn">SPIN!</button>
+  <div class="tools">
+    <button id="editBtn">✏️ Change the list</button>
+    <button id="soundBtn">🔊 Sound on</button>
+  </div>
+
+  <div class="modal" id="editor">
+    <div class="card editor">
+      <div class="ed-title" id="edTitle">Edit list</div>
+      <ul class="ed-list" id="edList"></ul>
+      <form class="ed-add" id="edAdd">
+        <input id="edInput" maxlength="18" placeholder="Type a new one…" autocomplete="off">
+        <button type="submit" title="Add">➕</button>
+      </form>
+      <div class="ed-msg" id="edMsg"></div>
+      <div class="ed-actions">
+        <button type="button" class="ed-reset" id="edReset">↩️ Start over</button>
+        <button type="button" class="spin" id="edDone" style="animation:none">Done ✅</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="card">
+      <div id="resultTitle">You got…</div>
+      <div class="big" id="resultEmoji">🎉</div>
+      <div class="label" id="resultLabel"></div>
+      <button class="spin" id="againBtn" style="animation:none">Again!</button>
+    </div>
+  </div>
+  <canvas id="confetti"></canvas>
+
+<script>
+/* ===== Content (placeholder — we'll decide the real items later) ===== */
+/* Each scenario = one list for the wheel. emoji is optional per item. */
+const SCENARIOS = {
+  friends: {
+    icon: "👫", name: "Friends", result: "It's your turn…",
+    items: ["Liam", "Elle Sim", "Walter", "Mingyi", "Chloe", "Emily", "Elle Chong", "Olivia",
+            "Jay Ong", "Kysie", "Jayden", "Amber", "Kaius", "Callen", "Helios"]
+            .map(label => ({ label })),
+  },
+  activities: {
+    icon: "🎨", name: "Activities", result: "Let's do…",
+    items: [
+      { emoji: "🖍️", label: "Drawing" }, { emoji: "🧱", label: "Lego" },
+      { emoji: "⚽", label: "Soccer" },  { emoji: "🚲", label: "Bike ride" },
+      { emoji: "💃", label: "Dance party" }, { emoji: "🧩", label: "Puzzle" },
+      { emoji: "🍪", label: "Baking" },  { emoji: "🌳", label: "Park" },
+      { emoji: "🫧", label: "Bubbles" }, { emoji: "🏰", label: "Build a fort" },
+      { emoji: "🎲", label: "Board game" }, { emoji: "🧘", label: "Yoga" },
+    ],
+  },
+  books: {
+    icon: "📚", name: "Books", result: "Let's read…",
+    items: [
+      "The Gruffalo", "Matilda", "Frog and Toad", "Charlotte's Web", "Goodnight Moon",
+      "Pete the Cat", "Dog Man", "Corduroy", "Madeline", "Curious George",
+      "Elmer", "Room on the Broom",
+    ].map(label => ({ emoji: "📖", label })),
+  },
+  snacks: {
+    icon: "🍎", name: "Snacks", result: "Snack time…",
+    items: [
+      { emoji: "🍎", label: "Apple" }, { emoji: "🍌", label: "Banana" },
+      { emoji: "🥕", label: "Carrots" }, { emoji: "🧀", label: "Cheese" },
+      { emoji: "🍇", label: "Grapes" }, { emoji: "🥨", label: "Pretzels" },
+      { emoji: "🍿", label: "Popcorn" }, { emoji: "🥛", label: "Yogurt" },
+    ],
+  },
+};
+/* emoji given to new items a kid adds, per list */
+const NEW_EMOJI = { friends: "", activities: "⭐", books: "📖", snacks: "😋" };
+const MIN_ITEMS = 2, MAX_ITEMS = 24;
+
+/* keep a copy of the starting lists for "Start over", then load the kid's saved lists */
+const DEFAULT_LISTS = JSON.parse(JSON.stringify(
+  Object.fromEntries(Object.entries(SCENARIOS).map(([k, s]) => [k, s.items]))));
+try {
+  const saved = JSON.parse(localStorage.getItem("wheelLists")) || {};
+  for (const k in saved) if (SCENARIOS[k] && Array.isArray(saved[k]) && saved[k].length >= MIN_ITEMS) SCENARIOS[k].items = saved[k];
+} catch (e) {}
+function saveLists() {
+  try { localStorage.setItem("wheelLists", JSON.stringify(Object.fromEntries(Object.entries(SCENARIOS).map(([k, s]) => [k, s.items])))); } catch (e) {}
+}
+
+let scenarioKey = "friends";
+let ITEMS = SCENARIOS.friends.items;
+
+/* ===== The 5 designs ===== */
+const THEMES = {
+  candy: {
+    name: "🍭 Candy Pop", title: "Candy Pop Spinner!", sub: "Sweet surprises inside!",
+    colors: ["#ff8fc7","#ffd36e","#8fe3ff","#b79cff","#7fe8b0","#ffa98f"],
+    text: "#5a1840", rim: "#ffffff", rimEdge: "#ff5fa2", bulb: "#ff5fa2", bulbAlt: "#ffe066",
+    stroke: "#ffffff", strokeW: 4, dash: null, pointer: "🍬", hub: "🍭",
+    font: "700 {s}px Fredoka", deco: ["🍭","🧁","🍬","🍩","🍓","🍦"],
+  },
+  jungle: {
+    name: "🦁 Jungle Safari", title: "Jungle Safari Spin!", sub: "Roar! Who will it be?",
+    colors: ["#ffcf3f","#7bc043","#f37736","#4fbf9f","#c9e265","#e8a33d"],
+    text: "#2d3a0c", rim: "#8b5a2b", rimEdge: "#5b3714", bulb: "#ffe066", bulbAlt: "#a6e36a",
+    stroke: "#5b3714", strokeW: 3, dash: null, pointer: "🍌", hub: "🦁",
+    font: "800 {s}px 'Baloo 2'", deco: ["🌴","🐒","🦜","🍃","🐘","🦒"],
+  },
+  space: {
+    name: "🚀 Space Rocket", title: "Space Rocket Spin!", sub: "3… 2… 1… blast off!",
+    colors: ["#7c4dff","#ff4fa3","#22d3ee","#facc15","#34d399","#fb7185"],
+    text: "#ffffff", rim: "#2a1f6b", rimEdge: "#b99cff", bulb: "#fff6a8", bulbAlt: "#8ef0ff",
+    stroke: "#120c3a", strokeW: 3, dash: null, pointer: "🛸", hub: "🪐",
+    font: "700 {s}px Fredoka", deco: ["⭐","🚀","🌙","☄️","👽","✨"], glow: true,
+  },
+  ocean: {
+    name: "🐠 Ocean Splash", title: "Ocean Splash Spin!", sub: "Dive in and see!",
+    colors: ["#4fc3f7","#ffd166","#06d6a0","#ff8fab","#90e0ef","#ffa62b"],
+    text: "#073b5c", rim: "#ffffff", rimEdge: "#1c6fc2", bulb: "#9be7ff", bulbAlt: "#ffffff",
+    stroke: "#ffffff", strokeW: 4, dash: null, pointer: "🐙", hub: "🐳",
+    font: "800 {s}px 'Baloo 2'", deco: ["🐠","🫧","🐚","🦀","🐬","🌊"],
+  },
+  crayon: {
+    name: "🖍️ Crayon Doodle", title: "Crayon Doodle Spin!", sub: "Colored in by hand ✏️",
+    colors: ["#ff6b6b","#ffd23f","#3bceac","#4d96ff","#ff9f1c","#c77dff"],
+    text: "#222222", rim: "#fffaf0", rimEdge: "#222222", bulb: "#222222", bulbAlt: "#222222",
+    stroke: "#222222", strokeW: 4, dash: [10, 6], pointer: "✏️", hub: "😊",
+    font: "400 {s}px 'Patrick Hand'", deco: ["🖍️","🌈","☀️","⭐","🎨","☁️"],
+  },
+};
+
+/* ===== Setup ===== */
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const pointerEl = document.getElementById("pointer");
+const hubEl = document.getElementById("hub");
+const spinBtn = document.getElementById("spinBtn");
+let theme = THEMES.candy, themeKey = "candy";
+let rot = 0, spinning = false, soundOn = true;
+const ARC = () => (Math.PI * 2) / ITEMS.length;
+
+function sizeCanvas() {
+  const r = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = r.width * dpr; canvas.height = r.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+
+function draw() {
+  const W = canvas.clientWidth, c = W / 2;
+  if (W < 40) return; // not laid out yet
+  const rimW = W * 0.06, R = c - rimW - 2, arc = ARC();
+  ctx.clearRect(0, 0, W, W);
+
+  // rim
+  ctx.beginPath(); ctx.arc(c, c, c - 2, 0, Math.PI * 2);
+  ctx.fillStyle = theme.rim; ctx.fill();
+  ctx.lineWidth = 4; ctx.strokeStyle = theme.rimEdge; ctx.setLineDash([]); ctx.stroke();
+
+  // bulbs
+  const n = 32;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rot * 0.0;
+    const x = c + Math.cos(a) * (c - rimW / 2 - 2), y = c + Math.sin(a) * (c - rimW / 2 - 2);
+    ctx.beginPath(); ctx.arc(x, y, rimW * 0.22, 0, Math.PI * 2);
+    ctx.fillStyle = i % 2 ? theme.bulb : theme.bulbAlt;
+    if (theme.glow) { ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10; }
+    ctx.fill(); ctx.shadowBlur = 0;
+  }
+
+  // segments
+  ctx.save(); ctx.translate(c, c); ctx.rotate(rot);
+  ITEMS.forEach((it, i) => {
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.arc(0, 0, R, i * arc, (i + 1) * arc); ctx.closePath();
+    ctx.fillStyle = segColor(i);
+    ctx.fill();
+    ctx.lineWidth = theme.strokeW; ctx.strokeStyle = theme.stroke;
+    ctx.setLineDash(theme.dash || []); ctx.stroke();
+
+    // crayon scribble texture
+    if (themeKey === "crayon") {
+      ctx.save(); ctx.clip(); ctx.globalAlpha = .18; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.setLineDash([]);
+      for (let k = -R; k < R; k += 9) { ctx.beginPath(); ctx.moveTo(k, -R); ctx.lineTo(k + R * .6, R); ctx.stroke(); }
+      ctx.restore();
+    }
+
+    // label
+    ctx.save(); ctx.rotate(i * arc + arc / 2);
+    ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillStyle = theme.text;
+    // font shrinks as slices get thinner; text squeezes to fit between rim and hub
+    const fs = Math.max(11, Math.min(W * 0.045, R * arc * 0.5));
+    const pad = W * 0.03, hubR = W * 0.09;
+    let x = R - pad;
+    if (it.emoji) {
+      ctx.font = `${fs * 1.2}px serif`;
+      ctx.fillText(it.emoji, x, 0);
+      x -= fs * 1.5;
+    }
+    ctx.font = theme.font.replace("{s}", fs);
+    ctx.fillText(it.label, x, 0, x - hubR);
+    ctx.restore();
+  });
+  ctx.restore();
+  ctx.setLineDash([]);
+}
+
+// avoid the last slice matching the first one's color
+function segColor(i) {
+  const k = theme.colors.length, n = ITEMS.length;
+  let idx = i % k;
+  if (i === n - 1 && n > 1 && idx === 0) idx = 1;
+  return theme.colors[idx];
+}
+
+/* ===== Themes ===== */
+function applyTheme(key) {
+  themeKey = key; theme = THEMES[key];
+  document.body.className = key;
+  document.getElementById("title").textContent = theme.title;
+  document.getElementById("subtitle").textContent = theme.sub;
+  pointerEl.textContent = theme.pointer;
+  hubEl.textContent = theme.hub;
+  document.querySelectorAll(".themes button").forEach(b => b.classList.toggle("active", b.dataset.key === key));
+  const deco = document.getElementById("deco"); deco.innerHTML = "";
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement("span");
+    s.textContent = theme.deco[i % theme.deco.length];
+    s.style.left = (Math.random() * 95) + "vw"; s.style.top = (Math.random() * 95) + "vh";
+    s.style.fontSize = (1.4 + Math.random() * 1.8) + "rem";
+    s.style.animationDelay = (-Math.random() * 7) + "s";
+    deco.appendChild(s);
+  }
+  if (document.fonts) document.fonts.ready.then(draw); else draw();
+  draw();
+}
+const themesEl = document.getElementById("themes");
+Object.entries(THEMES).forEach(([key, t]) => {
+  const b = document.createElement("button");
+  b.textContent = t.name; b.dataset.key = key;
+  b.onclick = () => { if (!spinning) { applyTheme(key); save(); } };
+  themesEl.appendChild(b);
+});
+
+/* ===== Scenarios ===== */
+function applyScenario(key) {
+  scenarioKey = key; ITEMS = SCENARIOS[key].items;
+  document.querySelectorAll(".scenarios button").forEach(b => {
+    const on = b.dataset.key === key;
+    b.classList.toggle("active", on); b.setAttribute("aria-selected", on);
+  });
+  document.getElementById("resultTitle").textContent = SCENARIOS[key].result;
+  draw();
+}
+const scenEl = document.getElementById("scenarios");
+Object.entries(SCENARIOS).forEach(([key, s]) => {
+  const b = document.createElement("button");
+  b.dataset.key = key; b.setAttribute("role", "tab");
+  b.innerHTML = `<span class="ico">${s.icon}</span>${s.name}`;
+  b.onclick = () => { if (!spinning) { applyScenario(key); save(); beep(1000, 0.06); } };
+  scenEl.appendChild(b);
+});
+
+/* ===== List editor ===== */
+const editor = document.getElementById("editor");
+const edList = document.getElementById("edList");
+const edInput = document.getElementById("edInput");
+const edMsg = document.getElementById("edMsg");
+let msgTimer;
+function say(text) { edMsg.textContent = text; clearTimeout(msgTimer); msgTimer = setTimeout(() => edMsg.textContent = "", 2500); }
+
+function renderEditor() {
+  const s = SCENARIOS[scenarioKey];
+  document.getElementById("edTitle").textContent = `${s.icon} ${s.name} (${ITEMS.length})`;
+  edList.innerHTML = "";
+  ITEMS.forEach((it, i) => {
+    const li = document.createElement("li");
+    const dot = document.createElement("span");
+    dot.className = "dot"; dot.style.background = segColor(i);
+    li.appendChild(dot);
+    if (it.emoji) {
+      const em = document.createElement("span");
+      em.className = "em"; em.textContent = it.emoji; li.appendChild(em);
+    }
+    const inp = document.createElement("input");
+    inp.value = it.label; inp.maxLength = 18; inp.setAttribute("aria-label", "Name");
+    inp.oninput = () => { it.label = inp.value; draw(); saveLists(); };
+    inp.onblur = () => {
+      it.label = inp.value.trim();
+      if (!it.label) { if (ITEMS.length > MIN_ITEMS) removeItem(i); else { it.label = "?"; renderEditor(); } }
+      draw(); saveLists();
+    };
+    li.appendChild(inp);
+    const del = document.createElement("button");
+    del.className = "del"; del.type = "button"; del.textContent = "❌"; del.title = "Remove";
+    del.onclick = () => removeItem(i);
+    li.appendChild(del);
+    edList.appendChild(li);
+  });
+}
+function removeItem(i) {
+  if (ITEMS.length <= MIN_ITEMS) { say(`The wheel needs at least ${MIN_ITEMS}!`); return; }
+  ITEMS.splice(i, 1); beep(300, 0.1);
+  renderEditor(); draw(); saveLists();
+}
+document.getElementById("edAdd").onsubmit = e => {
+  e.preventDefault();
+  const label = edInput.value.trim();
+  if (!label) return;
+  if (ITEMS.length >= MAX_ITEMS) { say(`Wow, that's full! Max ${MAX_ITEMS}.`); return; }
+  if (ITEMS.some(it => it.label.toLowerCase() === label.toLowerCase())) { say("That one is already on the wheel!"); return; }
+  const item = { label };
+  if (NEW_EMOJI[scenarioKey]) item.emoji = NEW_EMOJI[scenarioKey];
+  ITEMS.push(item); edInput.value = ""; beep(1200, 0.08);
+  renderEditor(); draw(); saveLists();
+  edList.scrollTop = edList.scrollHeight; edInput.focus();
+};
+document.getElementById("edReset").onclick = () => {
+  if (!confirm(`Put the ${SCENARIOS[scenarioKey].name} list back the way it started?`)) return;
+  SCENARIOS[scenarioKey].items = JSON.parse(JSON.stringify(DEFAULT_LISTS[scenarioKey]));
+  ITEMS = SCENARIOS[scenarioKey].items;
+  renderEditor(); draw(); saveLists();
+};
+function openEditor() { if (spinning) return; renderEditor(); edMsg.textContent = ""; editor.classList.add("show"); }
+function closeEditor() { editor.classList.remove("show"); draw(); }
+document.getElementById("editBtn").onclick = openEditor;
+document.getElementById("edDone").onclick = closeEditor;
+editor.onclick = e => { if (e.target === editor) closeEditor(); };
+
+/* remember the kid's last picks on this device */
+function save() {
+  try { localStorage.setItem("wheelPrefs", JSON.stringify({ theme: themeKey, scenario: scenarioKey })); } catch (e) {}
+}
+function load() {
+  try { return JSON.parse(localStorage.getItem("wheelPrefs")) || {}; } catch (e) { return {}; }
+}
+
+/* ===== Sound ===== */
+let audio;
+function beep(freq = 900, dur = 0.04, type = "triangle", vol = 0.15) {
+  if (!soundOn) return;
+  audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + dur);
+  o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + dur);
+}
+function fanfare() { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.18, "square", 0.08), i * 120)); }
+document.getElementById("soundBtn").onclick = e => {
+  soundOn = !soundOn; e.target.textContent = soundOn ? "🔊 Sound on" : "🔇 Sound off";
+};
+
+/* ===== Spin ===== */
+const TOP = Math.PI * 1.5;
+function indexAtPointer() {
+  const a = (((TOP - rot) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  return Math.floor(a / ARC());
+}
+function spin() {
+  if (spinning) return;
+  spinning = true; spinBtn.disabled = true;
+  const arc = ARC();
+  const winner = Math.floor(Math.random() * ITEMS.length);
+  const jitter = (Math.random() - 0.5) * arc * 0.7;
+  const base = TOP - (winner + 0.5) * arc + jitter;
+  const delta = (((base - rot) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  const start = rot, target = rot + delta + Math.PI * 2 * (5 + Math.floor(Math.random() * 3));
+  const dur = 4800 + Math.random() * 1200, t0 = performance.now();
+  let last = indexAtPointer();
+  const ease = t => 1 - Math.pow(1 - t, 4);
+  function frame(now) {
+    const t = Math.min(1, (now - t0) / dur);
+    rot = start + (target - start) * ease(t);
+    draw();
+    const idx = indexAtPointer();
+    if (idx !== last) {
+      last = idx; beep(700 + Math.random() * 300);
+      pointerEl.classList.remove("tick"); void pointerEl.offsetWidth; pointerEl.classList.add("tick");
+    }
+    if (t < 1) requestAnimationFrame(frame);
+    else finish(indexAtPointer());
+  }
+  requestAnimationFrame(frame);
+}
+function finish(i) {
+  rot %= Math.PI * 2;
+  spinning = false; spinBtn.disabled = false;
+  const it = ITEMS[i];
+  document.getElementById("resultEmoji").textContent = it.emoji || theme.hub;
+  document.getElementById("resultLabel").textContent = it.label + "!";
+  document.getElementById("modal").classList.add("show");
+  fanfare(); confetti();
+}
+spinBtn.onclick = spin;
+hubEl.onclick = spin;
+document.getElementById("againBtn").onclick = () => { closeModal(); spin(); };
+document.getElementById("modal").onclick = e => { if (e.target.id === "modal") closeModal(); };
+function closeModal() { document.getElementById("modal").classList.remove("show"); }
+document.addEventListener("keydown", e => {
+  if (editor.classList.contains("show")) { if (e.key === "Escape") closeEditor(); return; }
+  if (e.code === "Space" && !/INPUT|BUTTON/.test(e.target.tagName)) { e.preventDefault(); closeModal(); spin(); } });
+
+/* ===== Confetti ===== */
+const cf = document.getElementById("confetti"), cx = cf.getContext("2d");
+let parts = [];
+function confetti() {
+  cf.width = innerWidth; cf.height = innerHeight;
+  parts = Array.from({ length: 160 }, () => ({
+    x: innerWidth / 2, y: innerHeight / 2,
+    vx: (Math.random() - 0.5) * 16, vy: Math.random() * -16 - 4,
+    s: 6 + Math.random() * 8, r: Math.random() * 6, vr: (Math.random() - .5) * .4,
+    c: theme.colors[Math.floor(Math.random() * theme.colors.length)], life: 0,
+  }));
+  requestAnimationFrame(tickConfetti);
+}
+function tickConfetti() {
+  cx.clearRect(0, 0, cf.width, cf.height);
+  parts.forEach(p => {
+    p.vy += 0.4; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life++;
+    cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c;
+    cx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); cx.restore();
+  });
+  parts = parts.filter(p => p.y < cf.height + 40 && p.life < 300);
+  if (parts.length) requestAnimationFrame(tickConfetti); else cx.clearRect(0, 0, cf.width, cf.height);
+}
+
+window.addEventListener("resize", sizeCanvas);
+const prefs = load();
+applyTheme(THEMES[prefs.theme] ? prefs.theme : "candy");
+applyScenario(SCENARIOS[prefs.scenario] ? prefs.scenario : "friends");
+sizeCanvas();
+</script>
+</body>
+</html>
